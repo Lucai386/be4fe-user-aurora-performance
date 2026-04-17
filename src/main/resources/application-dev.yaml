@@ -1,0 +1,18 @@
+# Dev profile
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Mostra errori JWT più dettagliati in dev
+          jws-algorithms: RS256
+
+logging:
+  level:
+    com.be4fe_user_aurora_performance: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web.client: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true

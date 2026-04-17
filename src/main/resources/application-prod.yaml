@@ -1,0 +1,10 @@
+# Prod profile
+logging:
+  level:
+    com.be4fe_user_aurora_performance: WARN
+    org.springframework.security: WARN
+    root: WARN
+
+springdoc:
+  swagger-ui:
+    enabled: false

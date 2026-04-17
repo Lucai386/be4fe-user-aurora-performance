@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: be4fe-user-aurora-performance
+
+  security:
+    oauth2:
+      # Resource server: valida JWT degli utenti
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:aurora-performance}
+          jwk-set-uri: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:aurora-performance}/protocol/openid-connect/certs
+      # OAuth2 Client: ottiene service-account token per chiamare core e bff-admin
+      client:
+        registration:
+          core-client:
+            client-id: ${CORE_CLIENT_ID:aurora-bff-user}
+            client-secret: ${CORE_CLIENT_SECRET:aurora-bff-user-secret}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          core-client:
+            token-uri: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8180}/realms/${KEYCLOAK_REALM:aurora-performance}/protocol/openid-connect/token
+
+keycloak:
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8180}
+  realm: ${KEYCLOAK_REALM:aurora-performance}
+  client-id: ${KEYCLOAK_CLIENT_ID:aurora-be}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:aurora-be-secret}
+
+# URL dei servizi interni
+services:
+  core-url: ${CORE_SERVICE_URL:http://localhost:8081}
+  admin-bff-url: ${ADMIN_BFF_SERVICE_URL:http://localhost:8083}
+
+server:
+  port: ${SERVER_PORT:8082}
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+logging:
+  level:
+    com.be4fe_user_aurora_performance: INFO
+    org.springframework.security: WARN
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,prometheus,metrics,info"
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

@@ -1,0 +1,23 @@
+services:
+  be4fe-user:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aurora-be4fe-user
+    ports:
+      - '8082:8082'
+    environment:
+      KEYCLOAK_AUTH_SERVER_URL: http://aurora-keycloak:8080
+      KEYCLOAK_REALM: aurora-performance
+      KEYCLOAK_CLIENT_ID: aurora-be
+      KEYCLOAK_CLIENT_SECRET: aurora-be-secret
+      CORE_CLIENT_ID: aurora-bff-user
+      CORE_CLIENT_SECRET: aurora-bff-user-secret
+      CORE_SERVICE_URL: http://aurora-core:8081
+      SERVER_PORT: 8082
+    networks:
+      - aurora-net
+
+networks:
+  aurora-net:
+    external: true

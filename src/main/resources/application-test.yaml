@@ -1,0 +1,9 @@
+# Test profile
+logging:
+  level:
+    com.be4fe_user_aurora_performance: INFO
+    org.springframework.security: WARN
+
+springdoc:
+  swagger-ui:
+    enabled: true

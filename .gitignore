@@ -1,0 +1,29 @@
+target/
+*.jar
+*.war
+*.class
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+.eclipse/
+.settings/
+.project
+.classpath
+
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Spring Boot devtools
+.reloadtrigger
+
+# env files con secrets
+envs/prod.env
+envs/test.env
