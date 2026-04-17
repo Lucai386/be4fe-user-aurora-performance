@@ -34,7 +34,7 @@ public class DupService {
             return ListDupResponse.error(ErrorCode.NO_ENTE);
         }
 
-        List<Map> dups = coreApiClient.getDup(codiceIstat);
+        List<Map> dups = coreApiClient.getDup();
 
         if ("DB".equalsIgnoreCase(userRole) && userId != null) {
             // Per dipendenti base: filtra solo DUP con progetti collegati alle attività dell'utente

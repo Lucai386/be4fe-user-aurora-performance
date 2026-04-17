@@ -122,7 +122,7 @@ public class SessionService {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private List<Map> loadStruttureForUser(Integer userId, String codiceIstat) {
         if (codiceIstat == null || codiceIstat.isBlank()) return List.of();
-        List<Map> allStrutture = coreApiClient.getStrutture(codiceIstat.trim());
+        List<Map> allStrutture = coreApiClient.getStrutture();
 
         // Prima cerca come responsabile
         List<Map> asResponsabile = allStrutture.stream()

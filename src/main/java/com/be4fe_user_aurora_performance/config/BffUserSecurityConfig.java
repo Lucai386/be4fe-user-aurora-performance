@@ -1,5 +1,7 @@
 package com.be4fe_user_aurora_performance.config;
 
+import com.be4fe_user_aurora_performance.principal.UserPrincipalFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +17,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -41,6 +44,9 @@ public class BffUserSecurityConfig {
     @Value("${keycloak.client-id}")
     private String clientId;
 
+    @Autowired
+    private UserPrincipalFilter userPrincipalFilter;
+
     private static final String[] PUBLIC_ENDPOINTS = {
             "/api/auth/**",
             "/swagger-ui/**",
@@ -66,7 +72,8 @@ public class BffUserSecurityConfig {
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
-                );
+                )
+                .addFilterAfter(userPrincipalFilter, BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

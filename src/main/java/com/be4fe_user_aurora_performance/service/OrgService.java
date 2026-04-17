@@ -4,10 +4,9 @@ import com.be4fe_user_aurora_performance.client.CoreApiClient;
 import com.be4fe_user_aurora_performance.dto.org.OrgResponse;
 import com.be4fe_user_aurora_performance.dto.org.OrgRowDto;
 import com.be4fe_user_aurora_performance.enums.ErrorCode;
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,18 +21,17 @@ public class OrgService {
     private final CoreApiClient coreApiClient;
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public OrgResponse getOrg(Authentication authentication) {
-        Map currentUser = getCurrentUserMap(authentication);
-        if (currentUser == null) {
+    public OrgResponse getOrg(UserPrincipal userPrincipal) {
+        if (!userPrincipal.isResolved()) {
             return OrgResponse.error(ErrorCode.NOT_AUTHORIZED, MSG_USER_NOT_AUTHORIZED);
         }
 
-        String codiceIstat = strVal(currentUser, "codiceIstat");
+        String codiceIstat = userPrincipal.getCodiceIstat();
         if (codiceIstat == null || codiceIstat.isBlank()) {
             return OrgResponse.error(ErrorCode.NO_ENTE, MSG_NO_ENTE);
         }
 
-        List<Map> strutture = coreApiClient.getStrutture(codiceIstat.trim());
+        List<Map> strutture = coreApiClient.getStrutture();
         if (strutture.isEmpty()) {
             return OrgResponse.success(List.of(), List.of());
         }
@@ -42,24 +40,22 @@ public class OrgService {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public OrgResponse getMyOrg(Authentication authentication) {
-        Map currentUser = getCurrentUserMap(authentication);
-        if (currentUser == null) {
+    public OrgResponse getMyOrg(UserPrincipal userPrincipal) {
+        if (!userPrincipal.isResolved()) {
             return OrgResponse.error(ErrorCode.NOT_AUTHORIZED, MSG_USER_NOT_AUTHORIZED);
         }
 
-        String codiceIstat = strVal(currentUser, "codiceIstat");
+        String codiceIstat = userPrincipal.getCodiceIstat();
         if (codiceIstat == null || codiceIstat.isBlank()) {
             return OrgResponse.error(ErrorCode.NO_ENTE, MSG_NO_ENTE);
         }
 
-        Integer userId = currentUser.get("id") != null
-                ? Integer.parseInt(currentUser.get("id").toString()) : null;
+        Integer userId = userPrincipal.getId() != null ? userPrincipal.getId().intValue() : null;
         if (userId == null) {
             return OrgResponse.success(List.of(), List.of());
         }
 
-        List<Map> allStrutture = coreApiClient.getStrutture(codiceIstat.trim());
+        List<Map> allStrutture = coreApiClient.getStrutture();
         if (allStrutture.isEmpty()) {
             return OrgResponse.success(List.of(), List.of());
         }
@@ -210,13 +206,6 @@ public class OrgService {
             currentParentId = parent.get("idParent");
         }
         return depth;
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map getCurrentUserMap(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) return null;
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        return coreApiClient.getUserByKeycloakId(jwt.getSubject()).orElse(null);
     }
 
     private String strVal(Map<?, ?> map, String key) {

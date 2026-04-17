@@ -1,14 +1,13 @@
 package com.be4fe_user_aurora_performance.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.be4fe_user_aurora_performance.dto.dashboard.DashboardResponse;
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import com.be4fe_user_aurora_performance.service.DashboardService;
-import com.be4fe_user_aurora_performance.service.SessionService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,20 +27,17 @@ import lombok.extern.slf4j.Slf4j;
 public class DashboardController {
 
     private final DashboardService dashboardService;
-    private final SessionService sessionService;
+    private final UserPrincipal userPrincipal;
 
     @PostMapping("/metrics")
     @Operation(summary = "Ottieni metriche dashboard", 
                description = "Restituisce le statistiche della dashboard. Admin/dirigenti vedono metriche aggregate, dipendenti vedono metriche personali.")
-    public ResponseEntity<DashboardResponse> getMetrics(Authentication authentication) {
+    public ResponseEntity<DashboardResponse> getMetrics() {
         log.debug("Dashboard metrics request received");
-
-        String codiceIstat = sessionService.getCodiceIstat(authentication);
-        String userRole = sessionService.getUserRole(authentication);
-        Integer userId = sessionService.getUserId(authentication);
-
-        DashboardResponse response = dashboardService.getMetrics(codiceIstat, userRole, userId);
-
+        DashboardResponse response = dashboardService.getMetrics(
+                userPrincipal.requireCodiceIstat(),
+                userPrincipal.getRuolo(),
+                userPrincipal.getId().intValue());
         if ("OK".equals(response.getResult())) {
             return ResponseEntity.ok(response);
         } else {

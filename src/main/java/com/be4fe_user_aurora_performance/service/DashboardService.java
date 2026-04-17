@@ -52,10 +52,10 @@ public class DashboardService {
 
         // Fetch all needed data
         List<Map> attivita = coreApiClient.getAttivita(null, null, null);
-        List<Map> users = coreApiClient.getUsersByCodiceIstat(codiceIstat);
-        List<Map> strutture = coreApiClient.getStrutture(codiceIstat);
-        List<Map> dups = coreApiClient.getDup(codiceIstat);
-        Map<String, Long> obiettiviCounts = coreApiClient.getObiettiviCounts(codiceIstat);
+        List<Map> users = coreApiClient.getUsers();
+        List<Map> strutture = coreApiClient.getStrutture();
+        List<Map> dups = coreApiClient.getDup();
+        Map<String, Long> obiettiviCounts = coreApiClient.getObiettiviCounts();
 
         long totaleProgetti = dups.stream()
                 .mapToLong(d -> {

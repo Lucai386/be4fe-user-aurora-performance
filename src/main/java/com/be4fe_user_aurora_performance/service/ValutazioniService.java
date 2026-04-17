@@ -84,7 +84,7 @@ public class ValutazioniService {
         String codiceIstat = strVal(user, "codiceIstat");
         Integer userId = intVal(user, "id");
         // Find user's struttura (responsabile)
-        List<Map> strutture = coreApiClient.getStrutture(codiceIstat);
+        List<Map> strutture = coreApiClient.getStrutture();
         Optional<Map> strutturaOpt = strutture.stream()
                 .filter(s -> Objects.equals(intVal(s, "idResponsabile"), userId))
                 .findFirst();
@@ -111,7 +111,7 @@ public class ValutazioniService {
         String codiceIstat = strVal(user, "codiceIstat");
 
         // Obiettivi personali
-        List<Map> obiettivi = coreApiClient.getObiettivi(null, userId);
+        List<Map> obiettivi = coreApiClient.getObiettivi(userId);
         int obTotali = obiettivi.size();
         int obCompletati = countByStato(obiettivi, "COMPLETATO");
         int obInCorso = countByStato(obiettivi, "ATTIVO");
@@ -182,7 +182,7 @@ public class ValutazioniService {
         List<Map> attivita = new ArrayList<>();
         double oreTotali = 0, oreStimate = 0;
         for (Integer dipId : dipendentiIds) {
-            obiettivi.addAll(coreApiClient.getObiettivi(null, (long) dipId));
+            obiettivi.addAll(coreApiClient.getObiettivi((long) dipId));
             attivita.addAll(coreApiClient.getAttivita(null, (long) dipId, null));
             List<Map> ts = coreApiClient.getTimesheetByUtente((long) dipId, null, null);
             oreTotali += ts.stream().mapToDouble(e -> safeDouble(bigDecimalVal(e, "oreLavorate"))).sum();
@@ -200,8 +200,8 @@ public class ValutazioniService {
     }
 
     private ValutazioniStrutturaDto buildStrutturaMetricsAdmin(String codiceIstat) {
-        List<Map> users = coreApiClient.getUsersByCodiceIstat(codiceIstat);
-        List<Map> obiettivi = coreApiClient.getObiettivi(codiceIstat, null);
+        List<Map> users = coreApiClient.getUsers();
+        List<Map> obiettivi = coreApiClient.getObiettivi(null);
         List<Map> attivita = coreApiClient.getAttivita(null, null, null); // all activities
 
         double oreTotali = 0, oreStimate = 0;
@@ -309,7 +309,7 @@ public class ValutazioniService {
         Long userId = longVal(user, "id");
         Integer userIdInt = intVal(user, "id");
 
-        List<Map> obiettivi = coreApiClient.getObiettivi(null, userId);
+        List<Map> obiettivi = coreApiClient.getObiettivi(userId);
         List<Map> attivita = coreApiClient.getAttivita(null, userId, null);
         List<Map> tsAll = coreApiClient.getTimesheetByUtente(userId, null, null);
 
@@ -363,7 +363,7 @@ public class ValutazioniService {
 
     private DipendentePerformanceDto toDipendentePerformanceDto(Map user, String codiceIstat) {
         Long uid = longVal(user, "id");
-        List<Map> obiettivi = coreApiClient.getObiettivi(null, uid);
+        List<Map> obiettivi = coreApiClient.getObiettivi(uid);
         List<Map> attivita = coreApiClient.getAttivita(null, uid, null);
         int obCompletati = countByStato(obiettivi, "COMPLETATO");
         int attCompletate = (int) attivita.stream().filter(a -> "COMPLETATA".equals(strVal(a, "stato"))).count();
@@ -383,10 +383,10 @@ public class ValutazioniService {
     }
 
     private List<DipendenteSelectDto> getAllDipendentiSelect(String codiceIstat) {
-        return coreApiClient.getUsersByCodiceIstat(codiceIstat).stream()
+        return coreApiClient.getUsers().stream()
                 .map(u -> {
                     Long uid = longVal(u, "id");
-                    List<Map> obiettivi = coreApiClient.getObiettivi(null, uid);
+                    List<Map> obiettivi = coreApiClient.getObiettivi(uid);
                     List<Map> attivita = coreApiClient.getAttivita(null, uid, null);
                     int obC = countByStato(obiettivi, "COMPLETATO");
                     int attC = (int) attivita.stream().filter(a -> "COMPLETATA".equals(strVal(a, "stato"))).count();
@@ -416,7 +416,7 @@ public class ValutazioniService {
     }
 
     private Integer calculateUserScore(Long userId) {
-        List<Map> obiettivi = coreApiClient.getObiettivi(null, userId);
+        List<Map> obiettivi = coreApiClient.getObiettivi(userId);
         List<Map> attivita = coreApiClient.getAttivita(null, userId, null);
         int obC = countByStato(obiettivi, "COMPLETATO");
         int attC = (int) attivita.stream().filter(a -> "COMPLETATA".equals(strVal(a, "stato"))).count();
@@ -428,7 +428,7 @@ public class ValutazioniService {
     }
 
     private Set<Integer> getDipendentiStruttura(Integer responsabileId, String codiceIstat) {
-        List<Map> strutture = coreApiClient.getStrutture(codiceIstat);
+        List<Map> strutture = coreApiClient.getStrutture();
         return strutture.stream()
                 .filter(s -> Objects.equals(intVal(s, "idResponsabile"), responsabileId))
                 .findFirst()
@@ -451,7 +451,7 @@ public class ValutazioniService {
     }
 
     private String strutturaDelUtente(Integer userId, String codiceIstat) {
-        List<Map> strutture = coreApiClient.getStrutture(codiceIstat);
+        List<Map> strutture = coreApiClient.getStrutture();
         for (Map s : strutture) {
             if (Objects.equals(intVal(s, "idResponsabile"), userId)) return strValOrEmpty(s, "nome");
             Object staffObj = s.get("staff");

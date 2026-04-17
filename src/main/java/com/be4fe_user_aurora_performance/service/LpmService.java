@@ -23,10 +23,7 @@ public class LpmService {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public List<LpmActivityDto> list(LpmListRequest request) {
-        String codiceIstat = request != null ? request.getCodiceIstat() : null;
-        if (codiceIstat == null) return List.of();
-
-        List<Map> items = coreApiClient.getLpm(codiceIstat);
+        List<Map> items = coreApiClient.getLpm();
         return items.stream().map(this::toActivityDto).toList();
     }
 

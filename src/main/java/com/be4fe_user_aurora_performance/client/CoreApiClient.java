@@ -1,9 +1,11 @@
 package com.be4fe_user_aurora_performance.client;
 
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -33,6 +35,7 @@ public class CoreApiClient {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<UserPrincipal> userPrincipalProvider;
 
     @Value("${services.core-url}")
     private String coreBaseUrl;
@@ -78,6 +81,10 @@ public class CoreApiClient {
         HttpHeaders h = new HttpHeaders();
         h.setBearerAuth(getServiceToken());
         h.setContentType(MediaType.APPLICATION_JSON);
+        UserPrincipal principal = userPrincipalProvider.getIfAvailable();
+        if (principal != null && principal.isResolved()) {
+            h.set("X-Tenant-Id", principal.getCodiceIstat());
+        }
         return h;
     }
 
@@ -145,9 +152,8 @@ public class CoreApiClient {
         return getOne("/internal/users/" + id, Map.class);
     }
 
-    public List<Map> getUsersByCodiceIstat(String codiceIstat) {
-        return getList("/internal/users?codiceIstat=" + codiceIstat,
-                new ParameterizedTypeReference<>() {});
+    public List<Map> getUsers() {
+        return getList("/internal/users", new ParameterizedTypeReference<>() {});
     }
 
     public Optional<Map> saveUser(Map<String, Object> user) {
@@ -173,9 +179,8 @@ public class CoreApiClient {
 
     // ─── Strutture ────────────────────────────────────────────────────────────
 
-    public List<Map> getStrutture(String codiceIstat) {
-        return getList("/internal/strutture?codiceIstat=" + codiceIstat,
-                new ParameterizedTypeReference<>() {});
+    public List<Map> getStrutture() {
+        return getList("/internal/strutture", new ParameterizedTypeReference<>() {});
     }
 
     public List<Map> getUtentiStruttura(Integer strutturaId) {
@@ -185,9 +190,8 @@ public class CoreApiClient {
 
     // ─── DUP ──────────────────────────────────────────────────────────────────
 
-    public List<Map> getDup(String codiceIstat) {
-        return getList("/internal/dup?codiceIstat=" + codiceIstat,
-                new ParameterizedTypeReference<>() {});
+    public List<Map> getDup() {
+        return getList("/internal/dup", new ParameterizedTypeReference<>() {});
     }
 
     public Optional<Map> getDupById(Long id) {
@@ -239,9 +243,8 @@ public class CoreApiClient {
 
     // ─── LPM ──────────────────────────────────────────────────────────────────
 
-    public List<Map> getLpm(String codiceIstat) {
-        return getList("/internal/lpm?codiceIstat=" + codiceIstat,
-                new ParameterizedTypeReference<>() {});
+    public List<Map> getLpm() {
+        return getList("/internal/lpm", new ParameterizedTypeReference<>() {});
     }
 
     public Optional<Map> getLpmById(Long id) {
@@ -358,9 +361,8 @@ public class CoreApiClient {
 
     // ─── Obiettivi ────────────────────────────────────────────────────────────
 
-    public List<Map> getObiettivi(String codiceIstat, Long utenteId) {
+    public List<Map> getObiettivi(Long utenteId) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(coreBaseUrl + "/internal/obiettivi");
-        if (codiceIstat != null) builder.queryParam("codiceIstat", codiceIstat);
         if (utenteId != null) builder.queryParam("utenteId", utenteId);
         return getList(builder.build().toUriString().replace(coreBaseUrl, ""),
                 new ParameterizedTypeReference<>() {});
@@ -386,10 +388,10 @@ public class CoreApiClient {
         return post("/internal/obiettivi/" + id + "/progressivi", payload, Map.class);
     }
 
-    public Map<String, Long> getObiettiviCounts(String codiceIstat) {
+    public Map<String, Long> getObiettiviCounts() {
         try {
             ResponseEntity<Map> resp = restTemplate.exchange(
-                    coreBaseUrl + "/internal/obiettivi/count?codiceIstat=" + codiceIstat,
+                    coreBaseUrl + "/internal/obiettivi/count",
                     HttpMethod.GET, new HttpEntity<>(authHeaders()), Map.class);
             return resp.getBody() != null ? (Map<String, Long>) resp.getBody() : Map.of();
         } catch (Exception e) {

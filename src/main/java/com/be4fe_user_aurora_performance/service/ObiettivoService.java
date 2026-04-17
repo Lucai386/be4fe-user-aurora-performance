@@ -38,9 +38,9 @@ public class ObiettivoService {
 
         List<Map> raw;
         if (userRole != null && VIEW_ALL_ROLES.contains(userRole)) {
-            raw = coreApiClient.getObiettivi(codiceIstat, null);
+            raw = coreApiClient.getObiettivi(null);
         } else {
-            raw = userId != null ? coreApiClient.getObiettivi(null, userId) : coreApiClient.getObiettivi(codiceIstat, null);
+            raw = coreApiClient.getObiettivi(userId);
         }
         return ListObiettiviResponse.ok(raw.stream().map(this::toDto).toList());
     }
@@ -48,7 +48,7 @@ public class ObiettivoService {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ListObiettiviResponse listMieiObiettivi(Long userId) {
         if (userId == null) return ListObiettiviResponse.error(ErrorCode.USER_NOT_FOUND);
-        List<Map> raw = coreApiClient.getObiettivi(null, userId);
+        List<Map> raw = coreApiClient.getObiettivi(userId);
         return ListObiettiviResponse.ok(raw.stream().map(this::toDto).toList());
     }
 
@@ -164,20 +164,20 @@ public class ObiettivoService {
 
     // ─── Counts ───────────────────────────────────────────────────────────────
 
-    public Map<String, Long> getCounts(String codiceIstat) {
-        return coreApiClient.getObiettiviCounts(codiceIstat);
+    public Map<String, Long> getCounts() {
+        return coreApiClient.getObiettiviCounts();
     }
 
-    public long countTotale(String codiceIstat) {
-        return coreApiClient.getObiettiviCounts(codiceIstat).getOrDefault("totale", 0L);
+    public long countTotale() {
+        return coreApiClient.getObiettiviCounts().getOrDefault("totale", 0L);
     }
 
-    public long countAttivi(String codiceIstat) {
-        return coreApiClient.getObiettiviCounts(codiceIstat).getOrDefault("attivi", 0L);
+    public long countAttivi() {
+        return coreApiClient.getObiettiviCounts().getOrDefault("attivi", 0L);
     }
 
-    public long countCompletati(String codiceIstat) {
-        return coreApiClient.getObiettiviCounts(codiceIstat).getOrDefault("completati", 0L);
+    public long countCompletati() {
+        return coreApiClient.getObiettiviCounts().getOrDefault("completati", 0L);
     }
 
     // ─── Permission helpers ────────────────────────────────────────────────────

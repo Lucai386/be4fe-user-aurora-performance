@@ -3,8 +3,6 @@ package com.be4fe_user_aurora_performance.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,26 +19,23 @@ import com.be4fe_user_aurora_performance.dto.lpm.LpmItemResponse;
 import com.be4fe_user_aurora_performance.dto.lpm.LpmListRequest;
 import com.be4fe_user_aurora_performance.dto.lpm.LpmListResponse;
 import com.be4fe_user_aurora_performance.dto.lpm.LpmUpdateRequest;
-import com.be4fe_user_aurora_performance.client.CoreApiClient;
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import com.be4fe_user_aurora_performance.service.LpmService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/lpm")
 @Tag(name = "LPM", description = "Linee Programmatiche di Mandato")
 @SecurityRequirement(name = "bearerAuth")
+@RequiredArgsConstructor
 public class LpmController {
 
     private final LpmService lpmService;
-    private final CoreApiClient coreApiClient;
-
-    public LpmController(LpmService lpmService, CoreApiClient coreApiClient) {
-        this.lpmService = lpmService;
-        this.coreApiClient = coreApiClient;
-    }
+    private final UserPrincipal userPrincipal;
 
     @PostMapping("/list")
     @Operation(summary = "Lista tutte le LPM attive")
@@ -64,9 +59,8 @@ public class LpmController {
     @PostMapping("/create")
     @Operation(summary = "Crea nuova LPM")
     public ResponseEntity<LpmItemResponse> create(
-            @RequestBody LpmCreateRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
-        Integer userId = getUserId(jwt);
+            @RequestBody LpmCreateRequest request) {
+        Integer userId = userPrincipal.getId().intValue();
         LpmActivityDto created = lpmService.create(request, userId);
         return ResponseEntity.ok(LpmItemResponse.ok(created));
     }
@@ -74,9 +68,8 @@ public class LpmController {
     @PostMapping("/update")
     @Operation(summary = "Aggiorna LPM esistente")
     public ResponseEntity<LpmIdResponse> update(
-            @RequestBody LpmUpdateRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
-        Integer userId = getUserId(jwt);
+            @RequestBody LpmUpdateRequest request) {
+        Integer userId = userPrincipal.getId().intValue();
         return lpmService.update(request, userId)
                 .map(dto -> ResponseEntity.ok(LpmIdResponse.ok(dto.getId())))
                 .orElse(ResponseEntity.ok(LpmIdResponse.error("NOT_FOUND", "LPM non trovata")));
@@ -85,9 +78,8 @@ public class LpmController {
     @PostMapping("/delete")
     @Operation(summary = "Elimina LPM (soft delete)")
     public ResponseEntity<LpmIdResponse> delete(
-            @RequestBody LpmDeleteRequest request,
-            @AuthenticationPrincipal Jwt jwt) {
-        Integer userId = getUserId(jwt);
+            @RequestBody LpmDeleteRequest request) {
+        Integer userId = userPrincipal.getId().intValue();
         boolean deleted = lpmService.delete(request, userId);
         if (deleted) {
             return ResponseEntity.ok(LpmIdResponse.ok(request.getId()));
@@ -99,9 +91,8 @@ public class LpmController {
     @Operation(summary = "Collega LPM a un DUP")
     public ResponseEntity<LpmItemResponse> linkDup(
             @PathVariable Long lpmId,
-            @PathVariable Long dupId,
-            @AuthenticationPrincipal Jwt jwt) {
-        Integer userId = getUserId(jwt);
+            @PathVariable Long dupId) {
+        Integer userId = userPrincipal.getId().intValue();
         return lpmService.linkDup(lpmId, dupId, userId)
                 .map(dto -> ResponseEntity.ok(LpmItemResponse.ok(dto)))
                 .orElse(ResponseEntity.ok(LpmItemResponse.error("NOT_FOUND", "LPM o DUP non trovato")));
@@ -110,19 +101,10 @@ public class LpmController {
     @DeleteMapping("/{lpmId}/dup")
     @Operation(summary = "Scollega LPM da un DUP")
     public ResponseEntity<LpmItemResponse> unlinkDup(
-            @PathVariable Long lpmId,
-            @AuthenticationPrincipal Jwt jwt) {
-        Integer userId = getUserId(jwt);
+            @PathVariable Long lpmId) {
+        Integer userId = userPrincipal.getId().intValue();
         return lpmService.unlinkDup(lpmId, userId)
                 .map(dto -> ResponseEntity.ok(LpmItemResponse.ok(dto)))
                 .orElse(ResponseEntity.ok(LpmItemResponse.error("NOT_FOUND", "LPM non trovata")));
-    }
-
-    private Integer getUserId(Jwt jwt) {
-        if (jwt == null) return null;
-        String keycloakId = jwt.getSubject();
-        return coreApiClient.getUserByKeycloakId(keycloakId)
-                .map(user -> user.get("id") instanceof Number n ? n.intValue() : null)
-                .orElse(null);
     }
 }

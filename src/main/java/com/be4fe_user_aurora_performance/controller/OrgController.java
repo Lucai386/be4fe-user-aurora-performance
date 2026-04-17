@@ -1,12 +1,12 @@
 package com.be4fe_user_aurora_performance.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.be4fe_user_aurora_performance.dto.org.OrgResponse;
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import com.be4fe_user_aurora_performance.service.OrgService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,18 +19,17 @@ import lombok.extern.slf4j.Slf4j;
 public class OrgController {
 
     private final OrgService orgService;
+    private final UserPrincipal userPrincipal;
 
     @PostMapping("/readOrg")
-    public ResponseEntity<OrgResponse> readOrg(Authentication authentication) {
+    public ResponseEntity<OrgResponse> readOrg() {
         log.info("Reading org chart for authenticated user");
-        OrgResponse response = orgService.getOrg(authentication);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(orgService.getOrg(userPrincipal));
     }
 
     @PostMapping("/readMyOrg")
-    public ResponseEntity<OrgResponse> readMyOrg(Authentication authentication) {
+    public ResponseEntity<OrgResponse> readMyOrg() {
         log.info("Reading user subtree org chart for authenticated user");
-        OrgResponse response = orgService.getMyOrg(authentication);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(orgService.getMyOrg(userPrincipal));
     }
 }

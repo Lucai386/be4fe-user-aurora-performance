@@ -1,7 +1,6 @@
 package com.be4fe_user_aurora_performance.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.be4fe_user_aurora_performance.dto.dup.CreateProgettoRequest;
 import com.be4fe_user_aurora_performance.dto.dup.UpdateProgettoRequest;
+import com.be4fe_user_aurora_performance.principal.UserPrincipal;
 import com.be4fe_user_aurora_performance.service.ProgettoService;
 import com.be4fe_user_aurora_performance.service.ProgettoService.DeleteProgettoResponse;
 import com.be4fe_user_aurora_performance.service.ProgettoService.ListProgettiResponse;
 import com.be4fe_user_aurora_performance.service.ProgettoService.ProgettoResponse;
-import com.be4fe_user_aurora_performance.service.SessionService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,68 +30,40 @@ import lombok.RequiredArgsConstructor;
 public class ProgettoController {
 
     private final ProgettoService progettoService;
-    private final SessionService sessionService;
+    private final UserPrincipal userPrincipal;
 
-    /**
-     * Lista tutti i progetti di un DUP
-     */
     @GetMapping("/dup/{dupId}")
-    public ResponseEntity<ListProgettiResponse> listByDup(@PathVariable Long dupId, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.listByDup(dupId, userRole));
+    public ResponseEntity<ListProgettiResponse> listByDup(@PathVariable Long dupId) {
+        return ResponseEntity.ok(progettoService.listByDup(dupId, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Ottiene un singolo progetto
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<ProgettoResponse> getProgetto(@PathVariable Long id, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.getProgetto(id, userRole));
+    public ResponseEntity<ProgettoResponse> getProgetto(@PathVariable Long id) {
+        return ResponseEntity.ok(progettoService.getProgetto(id, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Crea un nuovo progetto in un DUP
-     */
     @PostMapping
-    public ResponseEntity<ProgettoResponse> createProgetto(@RequestBody CreateProgettoRequest body, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.createProgetto(body, userRole));
+    public ResponseEntity<ProgettoResponse> createProgetto(@RequestBody CreateProgettoRequest body) {
+        return ResponseEntity.ok(progettoService.createProgetto(body, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Aggiorna un progetto esistente
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<ProgettoResponse> updateProgetto(@PathVariable Long id, @RequestBody UpdateProgettoRequest body, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.updateProgetto(id, body, userRole));
+    public ResponseEntity<ProgettoResponse> updateProgetto(@PathVariable Long id, @RequestBody UpdateProgettoRequest body) {
+        return ResponseEntity.ok(progettoService.updateProgetto(id, body, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Elimina un progetto
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<DeleteProgettoResponse> deleteProgetto(@PathVariable Long id, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.deleteProgetto(id, userRole));
+    public ResponseEntity<DeleteProgettoResponse> deleteProgetto(@PathVariable Long id) {
+        return ResponseEntity.ok(progettoService.deleteProgetto(id, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Collega una LPM esistente a un progetto
-     */
     @PostMapping("/{id}/lpm/{lpmId}")
-    public ResponseEntity<ProgettoResponse> linkLpm(@PathVariable Long id, @PathVariable Long lpmId, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.linkLpm(id, lpmId, userRole));
+    public ResponseEntity<ProgettoResponse> linkLpm(@PathVariable Long id, @PathVariable Long lpmId) {
+        return ResponseEntity.ok(progettoService.linkLpm(id, lpmId, userPrincipal.getRuolo()));
     }
 
-    /**
-     * Scollega la LPM da un progetto
-     */
     @DeleteMapping("/{id}/lpm")
-    public ResponseEntity<ProgettoResponse> unlinkLpm(@PathVariable Long id, Authentication authentication) {
-        String userRole = sessionService.getUserRole(authentication);
-        return ResponseEntity.ok(progettoService.unlinkLpm(id, userRole));
+    public ResponseEntity<ProgettoResponse> unlinkLpm(@PathVariable Long id) {
+        return ResponseEntity.ok(progettoService.unlinkLpm(id, userPrincipal.getRuolo()));
     }
 }
