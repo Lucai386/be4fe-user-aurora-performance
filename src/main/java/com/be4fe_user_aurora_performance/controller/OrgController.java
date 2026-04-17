@@ -26,10 +26,4 @@ public class OrgController {
         log.info("Reading org chart for authenticated user");
         return ResponseEntity.ok(orgService.getOrg(userPrincipal));
     }
-
-    @PostMapping("/readMyOrg")
-    public ResponseEntity<OrgResponse> readMyOrg() {
-        log.info("Reading user subtree org chart for authenticated user");
-        return ResponseEntity.ok(orgService.getMyOrg(userPrincipal));
-    }
 }

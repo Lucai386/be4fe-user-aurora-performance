@@ -70,16 +70,18 @@ public class AuthService {
             String scope = tokenResponse.has("scope") ? tokenResponse.get("scope").asText() : "";
 
             UserInfo userInfo = extractUserInfoFromToken(accessToken);
-            syncUserInCore(userInfo);
 
-            // Log login nel core
-            coreApiClient.saveUserLog(Map.of(
-                    "userId", userInfo.getKeycloakId(),
-                    "azione", "LOGIN",
-                    "ipAddress", ipAddress != null ? ipAddress : "",
-                    "userAgent", userAgent != null ? userAgent : "",
-                    "createdAt", LocalDateTime.now().toString()
-            ));
+            // Sync e log: best-effort, non bloccano il login
+            try {
+                syncUserInCore(userInfo);
+                coreApiClient.saveUserLog(Map.of(
+                        "azione", "LOGIN",
+                        "ipAddress", ipAddress != null ? ipAddress : "",
+                        "userAgent", userAgent != null ? userAgent : ""
+                ));
+            } catch (Exception syncEx) {
+                log.warn("syncUserInCore/saveUserLog failed (non-blocking): {}", syncEx.getMessage());
+            }
 
             return LoginResponse.builder()
                     .accessToken(accessToken)
@@ -91,7 +93,7 @@ public class AuthService {
                     .build();
 
         } catch (HttpClientErrorException e) {
-            log.error("Keycloak authentication failed: {}", e.getResponseBodyAsString());
+            log.error("Keycloak authentication failed: status={} body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new AuthenticationException("AUTH_FAILED", "Credenziali non valide");
         } catch (Exception e) {
             log.error("Login error", e);
@@ -194,8 +196,15 @@ public class AuthService {
         if (ruolo != null) userPayload.put("ruolo", ruolo);
 
         if (existingOpt.isPresent()) {
-            Object userId = existingOpt.get().get("id");
-            if (userId != null) coreApiClient.updateUser(Long.parseLong(userId.toString()), userPayload);
+            Map<String, Object> existing = existingOpt.get();
+            Object userId = existing.get("id");
+            if (userId != null) {
+                // Merge: preserve DB fields (codiceIstat, codiceFiscale, assegnazioni, etc.)
+                // and only overlay what comes from the JWT
+                Map<String, Object> merged = new HashMap<>(existing);
+                merged.putAll(userPayload);
+                coreApiClient.updateUser(Long.parseLong(userId.toString()), merged);
+            }
         } else {
             coreApiClient.saveUser(userPayload);
         }

@@ -39,54 +39,6 @@ public class OrgService {
         return buildOrgResponse(strutture, strutture);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public OrgResponse getMyOrg(UserPrincipal userPrincipal) {
-        if (!userPrincipal.isResolved()) {
-            return OrgResponse.error(ErrorCode.NOT_AUTHORIZED, MSG_USER_NOT_AUTHORIZED);
-        }
-
-        String codiceIstat = userPrincipal.getCodiceIstat();
-        if (codiceIstat == null || codiceIstat.isBlank()) {
-            return OrgResponse.error(ErrorCode.NO_ENTE, MSG_NO_ENTE);
-        }
-
-        Integer userId = userPrincipal.getId() != null ? userPrincipal.getId().intValue() : null;
-        if (userId == null) {
-            return OrgResponse.success(List.of(), List.of());
-        }
-
-        List<Map> allStrutture = coreApiClient.getStrutture();
-        if (allStrutture.isEmpty()) {
-            return OrgResponse.success(List.of(), List.of());
-        }
-
-        // Trova la struttura radice dell'utente
-        Integer rootId = findUserStrutturaId(userId, allStrutture);
-        if (rootId == null) {
-            return OrgResponse.success(List.of(), List.of());
-        }
-
-        // Raccoglie il sotto-albero
-        Map<Object, Map> byId = new HashMap<>();
-        Map<Object, List<Map>> childrenMap = new HashMap<>();
-        for (Map s : allStrutture) {
-            byId.put(s.get("id"), s);
-            Object parentId = s.get("idParent");
-            if (parentId != null) {
-                childrenMap.computeIfAbsent(parentId, k -> new ArrayList<>()).add(s);
-            }
-        }
-
-        List<Map> subtree = new ArrayList<>();
-        collectSubtree(rootId, byId, childrenMap, subtree);
-
-        if (subtree.isEmpty()) {
-            return OrgResponse.success(List.of(), List.of());
-        }
-
-        return buildOrgResponse(subtree, allStrutture);
-    }
-
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -153,43 +105,6 @@ public class OrgService {
                 .staff(staffNames.isEmpty() ? null : staffNames)
                 .color(strVal(s, "colore"))
                 .build();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private Integer findUserStrutturaId(Integer userId, List<Map> allStrutture) {
-        String userIdStr = userId.toString();
-        // Prima cerca come responsabile
-        for (Map s : allStrutture) {
-            if (userIdStr.equals(strVal(s, "idResponsabile"))) return intVal(s, "id");
-        }
-        // Poi cerca come staff
-        for (Map s : allStrutture) {
-            Object staffObj = s.get("staff");
-            if (!(staffObj instanceof List)) continue;
-            for (Object ss : (List<?>) staffObj) {
-                if (ss instanceof Map ssMap && userIdStr.equals(strVal(ssMap, "idUser"))) {
-                    return intVal(s, "id");
-                }
-            }
-        }
-        return null;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void collectSubtree(Integer nodeId, Map<Object, Map> byId,
-                                Map<Object, List<Map>> childrenMap, List<Map> result) {
-        Map node = byId.get(nodeId);
-        if (node == null) node = byId.get((long) nodeId);
-        if (node == null) return;
-        result.add(node);
-        List<Map> children = childrenMap.get(nodeId);
-        if (children == null) children = childrenMap.get((long) nodeId);
-        if (children != null) {
-            for (Map child : children) {
-                Integer childId = intVal(child, "id");
-                if (childId != null) collectSubtree(childId, byId, childrenMap, result);
-            }
-        }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
